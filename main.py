@@ -1,8 +1,9 @@
 import pygame, sys, random
 from pygame.locals import QUIT
+from PIL import Image, ImageOps
 
 pygame.init()
-scale = 0.7
+scale = 720/1080
 DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
 pygame.display.set_caption('Hello World!')
 framerate = 60
@@ -10,29 +11,31 @@ frame_time = 1/framerate
 clock = pygame.time.Clock()
 
 class background:
-  background_image = pygame.image.load("Images/background.png")
-  width = 1024
-  height = 1024
+  
+  
   def __init__(self):
-    pass
+    self.width = int(1024*scale)
+    self.height = int(1024*scale)
+    background_PIL = Image.open("Images/background.png")
+    background_PIL = ImageOps.fit(background_PIL, (self.width,self.height)).save("converted_background.png")
+    print(background_PIL)
+    self.background_image = pygame.image.load("converted_background.png")
   def draw(self):
     player_pos = player.get_position()
     # converts the player coordinates to snap coordinates for the map image
     player_grid_pos = (int(player_pos[0]//self.width),int(player_pos[1]//self.height))
-    print(player_grid_pos)
     # blits map images in a 3x3 grid where the player is in the centre tile
     for x in range(-1,2):
       for y in range(-1,2):
-        DISPLAYSURF.blit(self.background_image, ((player_grid_pos[0]+x)*1024,(player_grid_pos[1]+y)*1024))
+        DISPLAYSURF.blit(self.background_image, ((player_grid_pos[0]+x)*self.width,(player_grid_pos[1]+y)*1024))
 
 background = background()
 # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
 
 class entity:
-  def __init__(self, radius, position, max_velocity):
+  def __init__(self, radius, position):
     self.position = position
     self.radius = radius
-    self.max_velocity = max_velocity
     self.velocity = [0,0]
   def set_position(self, new_position):
     self.position = new_position
@@ -53,14 +56,12 @@ class entity:
       self.move()
       pygame.draw.circle(DISPLAYSURF,(0,0,255),self.position,self.radius)
 
-
-
 # player specific code such as weapons, exp and health will stay in this class
 class player(entity):
-  def __init__(self, radius, position, max_velocity):
-    super().__init__(radius, position, max_velocity)
+  def __init__(self, radius, position):
+    super().__init__(radius, position)
   
-player = player(100, (500,500), 50)
+player = player(100, [500,500])
 player.set_y_velocity((100))  
 
 
@@ -72,12 +73,9 @@ while True:
       sys.exit()
 
   DISPLAYSURF.fill((255,255,255))
-  #DISPLAYSURF.blit(background_image, (0,0))
   background.draw()
-  pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
-  pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
+  #pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
+  #pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
   player.draw()
-  #clock.tick(framerate)
   frame_time = clock.tick(framerate)/1000
   pygame.display.update()
-
