@@ -6,6 +6,7 @@ import numpy as np
 pygame.init()
 scale = 720/1080
 DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
+player_screen_offset = np.array((1920,1080))/2
 pygame.display.set_caption('Hello World!')
 framerate = 60
 frame_time = 1/framerate
@@ -23,15 +24,13 @@ class background:
     self.background_image = pygame.image.load("converted_background.png")
   def draw(self):
     player_pos = player.get_position()
-    print(player_pos)
     # converts the player coordinates to snap coordinates for the map image
     player_grid_pos = np.trunc(player_pos/self.image_size)
-    print(player_grid_pos)
     # blits map images in a 3x3 grid where the player is in the centre tile
     for x in range(-1,2):
       for y in range(-1,2):
         offset = np.array((x,y))
-        DISPLAYSURF.blit(self.background_image, ((player_grid_pos+offset)*self.scaled_image_size))
+        DISPLAYSURF.blit(self.background_image, (((player_grid_pos+offset))*self.scaled_image_size-(player_screen_offset*scale)))
 
 background = background()
 # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
@@ -54,18 +53,24 @@ class entity:
     self.velocity[1] = y_velocity
   def move(self):
     self.position = self.position+self.velocity*frame_time
+
   # this will draw any entities onto the screen. currently defined as a blue circle
   def draw(self):
       self.move()
-      pygame.draw.circle(DISPLAYSURF,(0,0,255),self.position*scale,int(self.radius*scale))
+      pygame.draw.circle(DISPLAYSURF,(0,0,255),(self.position-player_screen_offset)*scale,int(self.radius*scale))
 
 # player specific code such as weapons, exp and health will stay in this class
 class player(entity):
   def __init__(self, radius, position):
     super().__init__(radius, position)
+  def move(self):
+    global player_screen_offset 
+    self.position = self.position+self.velocity*frame_time
+    player_screen_offset = self.position - np.array((1920,1080))/2
+
   
-player = player(100, [450,200])
-player.set_x_velocity((100))  
+player = player(100, [0,0])
+player.set_y_velocity((100))  
 
 
 
