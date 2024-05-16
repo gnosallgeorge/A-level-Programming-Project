@@ -70,7 +70,6 @@ class player(entity):
 
   
 player = player(100, [0,0])
-player.set_y_velocity((100))  
 
 
 
@@ -79,6 +78,21 @@ while True:
     if event.type == QUIT:
       pygame.quit()
       sys.exit()
+  pressed_keys = pygame.key.get_pressed()
+  if pressed_keys[pygame.K_w] != pressed_keys[pygame.K_s]:
+    if pressed_keys[pygame.K_w]:
+      player.set_y_velocity(-500)
+    if pressed_keys[pygame.K_s]:
+      player.set_y_velocity(500)
+  else:
+    player.set_y_velocity(0)
+  if pressed_keys[pygame.K_a] != pressed_keys[pygame.K_d]:
+    if pressed_keys[pygame.K_a]:
+      player.set_x_velocity(-500)
+    if pressed_keys[pygame.K_d]:
+      player.set_x_velocity(500)
+  else:
+    player.set_x_velocity(0)
 
   DISPLAYSURF.fill((255,255,255))
   background.draw()
