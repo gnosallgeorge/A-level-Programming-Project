@@ -26,6 +26,10 @@ class background:
     player_pos = player.get_position()
     # converts the player coordinates to snap coordinates for the map image
     player_grid_pos = np.trunc(player_pos/self.image_size)
+    if player_pos[0] < 0:
+      player_grid_pos[0] -= 1
+    if player_pos[1] < 0:
+      player_grid_pos[1] -= 1  
     # blits map images in a 3x3 grid where the player is in the centre tile
     for x in range(-1,2):
       for y in range(-1,2):
@@ -67,6 +71,21 @@ class player(entity):
     global player_screen_offset 
     self.position = self.position+self.velocity*frame_time
     player_screen_offset = self.position - np.array((1920,1080))/2
+  def check_input(self):
+    if pressed_keys[pygame.K_w] != pressed_keys[pygame.K_s]:
+      if pressed_keys[pygame.K_w]:
+        self.set_y_velocity(-500)
+      if pressed_keys[pygame.K_s]:
+        self.set_y_velocity(500)
+    else:
+      self.set_y_velocity(0)
+    if pressed_keys[pygame.K_a] != pressed_keys[pygame.K_d]:
+      if pressed_keys[pygame.K_a]:
+        self.set_x_velocity(-500)
+      if pressed_keys[pygame.K_d]:
+        self.set_x_velocity(500)
+    else:
+      self.set_x_velocity(0)
 
   
 player = player(100, [0,0])
@@ -79,20 +98,7 @@ while True:
       pygame.quit()
       sys.exit()
   pressed_keys = pygame.key.get_pressed()
-  if pressed_keys[pygame.K_w] != pressed_keys[pygame.K_s]:
-    if pressed_keys[pygame.K_w]:
-      player.set_y_velocity(-500)
-    if pressed_keys[pygame.K_s]:
-      player.set_y_velocity(500)
-  else:
-    player.set_y_velocity(0)
-  if pressed_keys[pygame.K_a] != pressed_keys[pygame.K_d]:
-    if pressed_keys[pygame.K_a]:
-      player.set_x_velocity(-500)
-    if pressed_keys[pygame.K_d]:
-      player.set_x_velocity(500)
-  else:
-    player.set_x_velocity(0)
+  player.check_input()
 
   DISPLAYSURF.fill((255,255,255))
   background.draw()
