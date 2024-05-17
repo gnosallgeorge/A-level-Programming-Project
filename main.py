@@ -2,6 +2,7 @@ import pygame, sys, random
 from pygame.locals import QUIT
 from PIL import Image, ImageOps
 import numpy as np
+import math as maths
 
 pygame.init()
 scale = 720/1080
@@ -11,6 +12,13 @@ pygame.display.set_caption('Hello World!')
 framerate = 60
 frame_time = 1/framerate
 clock = pygame.time.Clock()
+
+def vector_magnitude(vector):
+  try:
+    sum = (vector[0]**2)+(vector[1]**2)
+    return maths.sqrt(sum)
+  except:
+    return 0
 
 class background:
   def __init__(self):
@@ -40,21 +48,34 @@ background = background()
 # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
 
 class entity:
-  def __init__(self, radius, position):
+  def __init__(self, radius, position, max_speed):
     self.position = np.array(position)
     self.radius = radius
     self.velocity = np.array([0,0])
+    self.direction = np.array((0,0))
+    self.max_speed = max_speed
   def set_position(self, new_position):
     self.position = np.array(new_position)
   def get_position(self):
     return self.position
-  # velocity is set as a list [velocity_x, velocity_y]
-  def set_velocity(self, velocity):
-    self.velocity = np.array(velocity)
-  def set_x_velocity(self, x_velocity):
-    self.velocity[0] = x_velocity
-  def set_y_velocity(self, y_velocity):
-    self.velocity[1] = y_velocity
+  def set_direction(self, velocity):
+    self.diretion = np.array(velocity)
+    self.calculate_velocity()
+  def set_x_direction(self, x_velocity):
+    self.direction[0] = x_velocity
+    self.calculate_velocity()
+  def set_y_direction(self, y_velocity):
+    self.direction[1] = y_velocity
+    self.calculate_velocity()
+  def calculate_velocity(self):
+    if vector_magnitude(self.direction) == 0:
+      self.velocity = np.array((0,0))
+    else:
+      k = self.max_speed/vector_magnitude(self.direction)
+      self.velocity = self.direction*k
+
+      #constant = 
+
   def move(self):
     self.position = self.position+self.velocity*frame_time
 
@@ -66,7 +87,7 @@ class entity:
 # player specific code such as weapons, exp and health will stay in this class
 class player(entity):
   def __init__(self, radius, position):
-    super().__init__(radius, position)
+    super().__init__(radius, position, 500)
   def move(self):
     global player_screen_offset 
     self.position = self.position+self.velocity*frame_time
@@ -74,23 +95,21 @@ class player(entity):
   def check_input(self):
     if pressed_keys[pygame.K_w] != pressed_keys[pygame.K_s]:
       if pressed_keys[pygame.K_w]:
-        self.set_y_velocity(-500)
+        self.set_y_direction(-1)
       if pressed_keys[pygame.K_s]:
-        self.set_y_velocity(500)
+        self.set_y_direction(1)
     else:
-      self.set_y_velocity(0)
+      self.set_y_direction(0)
     if pressed_keys[pygame.K_a] != pressed_keys[pygame.K_d]:
       if pressed_keys[pygame.K_a]:
-        self.set_x_velocity(-500)
+        self.set_x_direction(-1)
       if pressed_keys[pygame.K_d]:
-        self.set_x_velocity(500)
+        self.set_x_direction(1)
     else:
-      self.set_x_velocity(0)
+      self.set_x_direction(0)
 
   
 player = player(100, [0,0])
-
-
 
 while True:
   for event in pygame.event.get():
