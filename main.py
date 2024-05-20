@@ -3,6 +3,7 @@ from pygame.locals import QUIT
 from PIL import Image, ImageOps
 import numpy as np
 import math as maths
+import random
 
 pygame.init()
 scale = 720/1080
@@ -12,6 +13,8 @@ pygame.display.set_caption('Hello World!')
 framerate = 60
 frame_time = 1/framerate
 clock = pygame.time.Clock()
+
+ENEMY_SPAWN_RADIUS = 2000
 
 def vector_magnitude(vector):
   try:
@@ -48,12 +51,13 @@ background = background()
 # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
 
 class entity:
-  def __init__(self, radius, position, max_speed):
+  def __init__(self, radius, position, max_speed, colour):
     self.position = np.array(position)
     self.radius = radius
     self.velocity = np.array([0,0])
     self.direction = np.array((0,0))
     self.max_speed = max_speed
+    self.colour = colour
   def set_position(self, new_position):
     self.position = np.array(new_position)
   def get_position(self):
@@ -73,21 +77,17 @@ class entity:
     else:
       k = self.max_speed/vector_magnitude(self.direction)
       self.velocity = self.direction*k
-
-      #constant = 
-
   def move(self):
     self.position = self.position+self.velocity*frame_time
-
   # this will draw any entities onto the screen. currently defined as a blue circle
   def draw(self):
       self.move()
-      pygame.draw.circle(DISPLAYSURF,(0,0,255),(self.position-player_screen_offset)*scale,int(self.radius*scale))
+      pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
 
 # player specific code such as weapons, exp and health will stay in this class
 class player(entity):
   def __init__(self, radius, position):
-    super().__init__(radius, position, 500)
+    super().__init__(radius, position, 500, (0,0,255))
   def move(self):
     global player_screen_offset 
     self.position = self.position+self.velocity*frame_time
@@ -108,8 +108,19 @@ class player(entity):
     else:
       self.set_x_direction(0)
 
-  
+class enemy(entity):
+  def __init__(self, radius, max_speed):
+    position = self.spawn_position()
+    super().__init__(radius, position, max_speed,(255,0,0))
+  def spawn_position(self):
+    player_pos = player.get_position()
+    angle = random.uniform(0,3.142*2)
+    x_pos = ENEMY_SPAWN_RADIUS*np.cos(angle)
+    y_pos = ENEMY_SPAWN_RADIUS*np.sin(angle)
+    return np.array((x_pos+player_pos[0],y_pos+player_pos[1]))
+
 player = player(100, [0,0])
+enemies = []
 
 while True:
   for event in pygame.event.get():
@@ -118,11 +129,14 @@ while True:
       sys.exit()
   pressed_keys = pygame.key.get_pressed()
   player.check_input()
-
+  enemies.append(enemy(50,0))
+  
   DISPLAYSURF.fill((255,255,255))
   background.draw()
   #pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
   #pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
+  for individual_enemy in enemies:
+    individual_enemy.draw()
   player.draw()
   frame_time = clock.tick(framerate)/1000
   pygame.display.update()
