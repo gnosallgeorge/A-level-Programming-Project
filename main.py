@@ -19,7 +19,7 @@ ENEMY_SPAWN_RADIUS = 2000
 def vector_magnitude(vector):
   try:
     sum = (vector[0]**2)+(vector[1]**2)
-    return maths.sqrt(sum)
+    return np.sqrt(sum)
   except:
     return 0
 
@@ -63,7 +63,7 @@ class entity:
   def get_position(self):
     return self.position
   def set_direction(self, velocity):
-    self.diretion = np.array(velocity)
+    self.direction = np.array(velocity)
     self.calculate_velocity()
   def set_x_direction(self, x_velocity):
     self.direction[0] = x_velocity
@@ -81,8 +81,8 @@ class entity:
     self.position = self.position+self.velocity*frame_time
   # this will draw any entities onto the screen. currently defined as a blue circle
   def draw(self):
-      self.move()
-      pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
+    self.move()
+    pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
 
 # player specific code such as weapons, exp and health will stay in this class
 class player(entity):
@@ -113,15 +113,29 @@ class enemy(entity):
     position = self.spawn_position()
     super().__init__(radius, position, max_speed,(255,0,0))
   def spawn_position(self):
+    # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
+    # Trigonometry is then used to determine the x and y coordinates of the enemy relative to the player.
+    # These values are then added to the player position.
     player_pos = player.get_position()
     angle = random.uniform(0,3.142*2)
     x_pos = ENEMY_SPAWN_RADIUS*np.cos(angle)
     y_pos = ENEMY_SPAWN_RADIUS*np.sin(angle)
     return np.array((x_pos+player_pos[0],y_pos+player_pos[1]))
+  def point_towards_player(self):
+    #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
+    player_pos = player.get_position()
+    vect_difference = player_pos - self.position
+    self.set_direction(vect_difference)
+  def move(self):
+    #redefined from entity class so that the enemy points towards the player before moving
+    self.point_towards_player()
+    super().move()
+
 
 player = player(100, [0,0])
 enemies = []
-
+for i in range(100):
+  enemies.append(enemy(50,100))
 while True:
   for event in pygame.event.get():
     if event.type == QUIT:
@@ -129,7 +143,7 @@ while True:
       sys.exit()
   pressed_keys = pygame.key.get_pressed()
   player.check_input()
-  enemies.append(enemy(50,0))
+  
   
   DISPLAYSURF.fill((255,255,255))
   background.draw()
