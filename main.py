@@ -23,7 +23,7 @@ def vector_magnitude(vector):
   except:
     return 0
 
-class background:
+class backgroundClass:
   def __init__(self):
     background_PIL = Image.open("Images/background.png")
     self.image_size = np.array(background_PIL.size)
@@ -47,7 +47,7 @@ class background:
         offset = np.array((x,y))
         DISPLAYSURF.blit(self.background_image, (((player_grid_pos+offset))*self.scaled_image_size-(player_screen_offset*scale)))
 
-background = background()
+background = backgroundClass()
 # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
 
 class entity:
@@ -79,13 +79,27 @@ class entity:
       self.velocity = self.direction*k
   def move(self):
     self.position = self.position+self.velocity*frame_time
-  # this will draw any entities onto the screen. currently defined as a blue circle
   def draw(self):
+    # this will draw any entities onto the screen. currently defined as a coloured circle
     self.move()
     pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
+  def is_touching(self,other_entity,other_coords = False):
+    if type(other_coords) == np.ndarray:
+      tested_position = other_coords
+    else:
+      tested_position = self.position
+    if isinstance(other_entity, entity):
+      print(tested_position)
+      print(other_entity.get_position())
+      vect_diff = tested_position-other_entity.get_position()
+      collide_dist = self.radius+other_entity.radius
+      if vector_magnitude(vect_diff) < collide_dist:
+        return True
+    return False
+
 
 # player specific code such as weapons, exp and health will stay in this class
-class player(entity):
+class playerClass(entity):
   def __init__(self, radius, position):
     super().__init__(radius, position, 500, (0,0,255))
   def move(self):
@@ -110,17 +124,32 @@ class player(entity):
 
 class enemy(entity):
   def __init__(self, radius, max_speed):
+    self.radius = radius
     position = self.spawn_position()
     super().__init__(radius, position, max_speed,(255,0,0))
-  def spawn_position(self):
+  def spawn_position(self): #fix
     # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
     # Trigonometry is then used to determine the x and y coordinates of the enemy relative to the player.
     # These values are then added to the player position.
     player_pos = player.get_position()
-    angle = random.uniform(0,3.142*2)
-    x_pos = ENEMY_SPAWN_RADIUS*np.cos(angle)
-    y_pos = ENEMY_SPAWN_RADIUS*np.sin(angle)
-    return np.array((x_pos+player_pos[0],y_pos+player_pos[1]))
+    valid_pos = False
+    count = 0
+    while not valid_pos != count<=20:
+      #if too many spawning attempts are made then the spawning attempt will be cancelled
+      count += 1
+      angle = random.uniform(0,3.142*2)
+      x_pos = ENEMY_SPAWN_RADIUS*np.cos(angle)
+      y_pos = ENEMY_SPAWN_RADIUS*np.sin(angle)
+      spawn_pos = np.array((x_pos+player_pos[0],y_pos+player_pos[1]))
+      valid_pos = True
+      #check if the spawning space is filled by another enemy
+      for i in enemies:
+        if self.is_touching(i,spawn_pos):
+          valid_pos = False
+    if valid_pos:  
+      return spawn_pos
+    else:
+      print("no valid spawning space")
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
     player_pos = player.get_position()
@@ -132,10 +161,14 @@ class enemy(entity):
     super().move()
 
 
-player = player(100, [0,0])
+player = playerClass(100, [0,0])
 enemies = []
 for i in range(100):
-  enemies.append(enemy(50,100))
+  temp_enemy = enemy(50,100)
+  if type(temp_enemy.get_position()) is np.ndarray:
+    print(type(temp_enemy.get_position()))
+    enemies.append(temp_enemy)
+print(len(enemies))
 while True:
   for event in pygame.event.get():
     if event.type == QUIT:
