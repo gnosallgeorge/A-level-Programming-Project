@@ -22,6 +22,31 @@ def vector_magnitude(vector):
     return np.sqrt(sum)
   except:
     return 0
+def spawn_enemy_attempt(radius, max_speed):
+  # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
+  # Trigonometry is then used to determine the x and y coordinates of the enemy relative to the player.
+  # These values are then added to the player position.
+  player_pos = player.get_position()
+  valid_pos = False
+  count = 0
+  while not valid_pos and count<=10:
+    #if too many spawning attempts are made then the spawning attempt will be cancelled
+    count += 1
+    angle = random.uniform(0,3.142*2)
+    x_pos = ENEMY_SPAWN_RADIUS*np.cos(angle)
+    y_pos = ENEMY_SPAWN_RADIUS*np.sin(angle)
+    spawn_pos = np.array((x_pos+player_pos[0],y_pos+player_pos[1]))
+    valid_pos = True
+    #check if the spawning space is filled by another enemy
+    for i in enemies:
+      if not isinstance(i, entity) or vector_magnitude(spawn_pos-i.position)<=radius+i.radius:  
+        valid_pos = False
+  if valid_pos:  
+    enemies.append(enemy(radius,max_speed,spawn_pos))
+    return True
+  else:
+    print("no valid spawning space")
+    return False
 
 class backgroundClass:
   def __init__(self):
@@ -123,9 +148,9 @@ class playerClass(entity):
       self.set_x_direction(0)
 
 class enemy(entity):
-  def __init__(self, radius, max_speed):
-    self.radius = radius
-    position = self.spawn_position()
+  def __init__(self, radius, max_speed, position):
+    #self.radius = radius
+    #position = self.spawn_position()
     super().__init__(radius, position, max_speed,(255,0,0))
   def spawn_position(self): #fix
     # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
@@ -164,10 +189,7 @@ class enemy(entity):
 player = playerClass(100, [0,0])
 enemies = []
 for i in range(100):
-  temp_enemy = enemy(50,100)
-  if type(temp_enemy.get_position()) is np.ndarray:
-    print(type(temp_enemy.get_position()))
-    enemies.append(temp_enemy)
+  spawn_enemy_attempt(50,100)
 print(len(enemies))
 while True:
   for event in pygame.event.get():
