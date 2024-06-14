@@ -4,6 +4,7 @@ from PIL import Image, ImageOps
 import numpy as np
 import math as maths
 import random
+import time
 
 pygame.init()
 scale = 720/1080
@@ -29,7 +30,7 @@ def spawn_enemy_attempt(radius, max_speed):
   player_pos = player.get_position()
   valid_pos = False
   count = 0
-  while not valid_pos and count<=10:
+  while not valid_pos and count<=5:
     #if too many spawning attempts are made then the spawning attempt will be cancelled
     count += 1
     angle = random.uniform(0,3.142*2)
@@ -45,7 +46,6 @@ def spawn_enemy_attempt(radius, max_speed):
     enemies.append(enemy(radius,max_speed,spawn_pos))
     return True
   else:
-    print("no valid spawning space")
     return False
 
 class backgroundClass:
@@ -73,9 +73,10 @@ class backgroundClass:
         DISPLAYSURF.blit(self.background_image, (((player_grid_pos+offset))*self.scaled_image_size-(player_screen_offset*scale)))
 
 background = backgroundClass()
-# Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
+
 
 class entity:
+  # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
   def __init__(self, radius, position, max_speed, colour):
     self.position = np.array(position)
     self.radius = radius
@@ -87,8 +88,8 @@ class entity:
     self.position = np.array(new_position)
   def get_position(self):
     return self.position
-  def set_direction(self, velocity):
-    self.direction = np.array(velocity)
+  def set_direction(self, direction):
+    self.direction = np.array(direction)
     self.calculate_velocity()
   def set_x_direction(self, x_velocity):
     self.direction[0] = x_velocity
@@ -123,8 +124,9 @@ class entity:
     return False
 
 
-# player specific code such as weapons, exp and health will stay in this class
+
 class playerClass(entity):
+  # player specific code such as weapons, exp and health will stay in this class
   def __init__(self, radius, position):
     super().__init__(radius, position, 500, (0,0,255))
   def move(self):
@@ -149,32 +151,7 @@ class playerClass(entity):
 
 class enemy(entity):
   def __init__(self, radius, max_speed, position):
-    #self.radius = radius
-    #position = self.spawn_position()
     super().__init__(radius, position, max_speed,(255,0,0))
-  def spawn_position(self): #fix
-    # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
-    # Trigonometry is then used to determine the x and y coordinates of the enemy relative to the player.
-    # These values are then added to the player position.
-    player_pos = player.get_position()
-    valid_pos = False
-    count = 0
-    while not valid_pos != count<=20:
-      #if too many spawning attempts are made then the spawning attempt will be cancelled
-      count += 1
-      angle = random.uniform(0,3.142*2)
-      x_pos = ENEMY_SPAWN_RADIUS*np.cos(angle)
-      y_pos = ENEMY_SPAWN_RADIUS*np.sin(angle)
-      spawn_pos = np.array((x_pos+player_pos[0],y_pos+player_pos[1]))
-      valid_pos = True
-      #check if the spawning space is filled by another enemy
-      for i in enemies:
-        if self.is_touching(i,spawn_pos):
-          valid_pos = False
-    if valid_pos:  
-      return spawn_pos
-    else:
-      print("no valid spawning space")
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
     player_pos = player.get_position()
@@ -185,12 +162,13 @@ class enemy(entity):
     self.point_towards_player()
     super().move()
 
+total = 0
 
 player = playerClass(100, [0,0])
 enemies = []
+
 for i in range(100):
   spawn_enemy_attempt(50,100)
-print(len(enemies))
 while True:
   for event in pygame.event.get():
     if event.type == QUIT:
