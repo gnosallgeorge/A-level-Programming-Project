@@ -115,11 +115,9 @@ class entity:
     else:
       tested_position = self.position
     if isinstance(other_entity, entity):
-      print(tested_position)
-      print(other_entity.get_position())
       vect_diff = tested_position-other_entity.get_position()
       collide_dist = self.radius+other_entity.radius
-      if vector_magnitude(vect_diff) < collide_dist:
+      if (vector_magnitude(vect_diff) < collide_dist) and self != other_entity:
         return True
     return False
 
@@ -160,14 +158,18 @@ class enemy(entity):
   def move(self):
     #redefined from entity class so that the enemy points towards the player before moving
     self.point_towards_player()
-    super().move()
+    new_position = self.position+self.velocity*frame_time
+    for i in enemies:
+      if self.is_touching(i, new_position):
+        new_position = self.position
+    self.position = new_position
 
 total = 0
 
 player = playerClass(100, [0,0])
 enemies = []
 
-for i in range(100):
+for i in range(50):
   spawn_enemy_attempt(50,100)
 while True:
   for event in pygame.event.get():
@@ -185,5 +187,6 @@ while True:
   for individual_enemy in enemies:
     individual_enemy.draw()
   player.draw()
+  print(1/frame_time)
   frame_time = clock.tick(framerate)/1000
   pygame.display.update()
