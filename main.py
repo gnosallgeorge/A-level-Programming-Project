@@ -158,11 +158,15 @@ class enemy(entity):
   def move(self):
     #redefined from entity class so that the enemy points towards the player before moving
     self.point_towards_player()
-    new_position = self.position+self.velocity*frame_time
+    self.position = self.position+self.velocity*frame_time
     for i in enemies:
-      if self.is_touching(i, new_position):
-        new_position = self.position
-    self.position = new_position
+      if self.is_touching(i) and isinstance(i, entity):
+        displacement_vect = self.position - i.position
+        combined_radius = self.radius + i.radius
+        scale = (combined_radius/vector_magnitude(displacement_vect))-1
+        movement = displacement_vect*scale
+        self.position = self.position + movement
+
 
 total = 0
 
