@@ -14,6 +14,8 @@ pygame.display.set_caption('Hello World!')
 framerate = 60
 frame_time = 1/framerate
 clock = pygame.time.Clock()
+frames_rendered = 0
+uptime = 0
 
 ENEMY_SPAWN_RADIUS = 2000
 
@@ -84,6 +86,7 @@ class entity:
     self.direction = np.array((0,0))
     self.max_speed = max_speed
     self.colour = colour
+    self.time_since_update = uptime
   def set_position(self, new_position):
     self.position = np.array(new_position)
   def get_position(self):
@@ -104,10 +107,11 @@ class entity:
       k = self.max_speed/vector_magnitude(self.direction)
       self.velocity = self.direction*k
   def move(self):
-    self.position = self.position+self.velocity*frame_time
+    time_difference = uptime - self.time_since_update
+    self.time_since_update = uptime
+    self.position = self.position+self.velocity*time_difference
   def draw(self):
     # this will draw any entities onto the screen. currently defined as a coloured circle
-    self.move()
     pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
   def is_touching(self,other_entity,other_coords = False):
     if type(other_coords) == np.ndarray:
@@ -125,6 +129,8 @@ class entity:
 
 class playerClass(entity):
   # player specific code such as weapons, exp and health will stay in this class
+  health_points = 10
+  health = 10
   def __init__(self, radius, position):
     super().__init__(radius, position, 500, (0,0,255))
   def move(self):
@@ -158,21 +164,25 @@ class enemy(entity):
   def move(self):
     #redefined from entity class so that the enemy points towards the player before moving
     self.point_towards_player()
-    self.position = self.position+self.velocity*frame_time
-    for i in enemies:
-      if self.is_touching(i) and isinstance(i, entity):
-        displacement_vect = self.position - i.position
-        combined_radius = self.radius + i.radius
-        scale = (combined_radius/vector_magnitude(displacement_vect))-1
-        movement = displacement_vect*scale
-        self.position = self.position + movement
+    time_difference = uptime - self.time_since_update
+    self.time_since_update = uptime
+    self.position = self.position+self.velocity*time_difference
+    display_position = self.position-player_screen_offset
+    if (display_position[0] <= 1920 and display_position[0] >= 0) and (display_position[1] <= 1080 and display_position[1] >= 0):
+      collision_check = enemies + [player]
+      for i in collision_check:
+        if self.is_touching(i) and isinstance(i, entity):
+          displacement_vect = self.position - i.position
+          combined_radius = self.radius + i.radius
+          scale = (combined_radius/vector_magnitude(displacement_vect))-1
+          movement = displacement_vect*scale
+          self.position = self.position + movement
 
 
 total = 0
 
 player = playerClass(100, [0,0])
 enemies = []
-
 for i in range(50):
   spawn_enemy_attempt(50,100)
 while True:
@@ -188,9 +198,16 @@ while True:
   background.draw()
   #pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
   #pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
-  for individual_enemy in enemies:
-    individual_enemy.draw()
+  for individual_enemy in range(len(enemies)):
+    if frames_rendered%1 == individual_enemy%1:
+      enemies[individual_enemy].move()
+    enemies[individual_enemy].draw()
+  
+  
+  player.move()
   player.draw()
   print(1/frame_time)
   frame_time = clock.tick(framerate)/1000
+  uptime += frame_time
+  frames_rendered += 1
   pygame.display.update()
