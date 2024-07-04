@@ -152,9 +152,17 @@ class playerClass(entity):
         self.set_x_direction(1)
     else:
       self.set_x_direction(0)
+  def check_if_damaged(self):
+    for i in enemies:
+      distance = vector_magnitude(self.position-i.position)
+      if distance <= self.radius + i.radius and uptime - i.time_since_damage >2:
+        self.health -= 1
+        i.time_since_damage = uptime
+
 
 class enemy(entity):
   def __init__(self, radius, max_speed, position):
+    self.time_since_damage = uptime
     super().__init__(radius, position, max_speed,(255,0,0))
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
@@ -199,11 +207,10 @@ while True:
   #pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
   #pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
   for individual_enemy in range(len(enemies)):
-    if frames_rendered%1 == individual_enemy%1:
-      enemies[individual_enemy].move()
+    enemies[individual_enemy].move()
     enemies[individual_enemy].draw()
   
-  
+  player.check_if_damaged()
   player.move()
   player.draw()
   print(1/frame_time)
