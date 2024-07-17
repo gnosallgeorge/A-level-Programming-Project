@@ -56,7 +56,7 @@ def resize_image(source,dest):
   width = int(scaled_image_size[0])
   height = int(scaled_image_size[1])
   background_image = ImageOps.fit(original_image, (width,height)).save(dest)
-  background_image = pygame.image.load(dest)
+  background_image = pygame.image.load(dest).convert_alpha()
   return background_image, image_size, scaled_image_size
 
 class backgroundClass:
@@ -102,6 +102,7 @@ class entity(pygame.sprite.Sprite):
     self.time_since_update = uptime
     self.image,_,_ = resize_image(image_location,image_destination)
     self.rect = self.image.get_rect()
+    self.rect[0:2] = self.position
   def set_position(self, new_position):
     self.position = np.array(new_position)
   def get_position(self):
@@ -125,6 +126,7 @@ class entity(pygame.sprite.Sprite):
     time_difference = uptime - self.time_since_update
     self.time_since_update = uptime
     self.position = self.position+self.velocity*time_difference
+    self.rect[0:2] = self.position
   def draw(self):
     # this will draw any entities onto the screen. currently defined as a coloured circle
     #pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
@@ -150,9 +152,11 @@ class playerClass(entity):
   def __init__(self, radius, position):
     super().__init__(radius, position, 500, (0,0,255),"Images/player.png","converted_player.png")
   def move(self):
+    #moves based on velocity, saves the result to self.rect
     global player_screen_offset 
     self.position = self.position+self.velocity*frame_time
     player_screen_offset = self.position - np.array((1920,1080))/2
+    self.rect[0:2] = self.position
   def check_input(self):
     if pressed_keys[pygame.K_w] != pressed_keys[pygame.K_s]:
       if pressed_keys[pygame.K_w]:
@@ -201,6 +205,7 @@ class enemy(entity):
           scale = (combined_radius/vector_magnitude(displacement_vect))-1
           movement = displacement_vect*scale
           self.position = self.position + movement
+    self.rect[0:2] = self.position
 
 
 total = 0
