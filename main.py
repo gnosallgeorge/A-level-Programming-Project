@@ -49,17 +49,29 @@ def spawn_enemy_attempt(radius, max_speed):
     return True
   else:
     return False
+def resize_image(source,dest):
+  original_image = Image.open(source)
+  image_size = np.array(original_image.size)
+  scaled_image_size = np.trunc(image_size*scale)
+  width = int(scaled_image_size[0])
+  height = int(scaled_image_size[1])
+  background_image = ImageOps.fit(original_image, (width,height)).save(dest)
+  background_image = pygame.image.load(dest)
+  return background_image, image_size, scaled_image_size
 
 class backgroundClass:
   def __init__(self):
+    """
     background_PIL = Image.open("Images/background.png")
     self.image_size = np.array(background_PIL.size)
     self.scaled_image_size = np.trunc(self.image_size*scale)
     self.width = int(self.scaled_image_size[0])
     self.height = int(self.scaled_image_size[1])
     background_PIL = ImageOps.fit(background_PIL, (self.width,self.height)).save("converted_background.png")
-    print(background_PIL)
+    #print(background_PIL)
     self.background_image = pygame.image.load("converted_background.png")
+    """
+    self.background_image, self.image_size, self.scaled_image_size = resize_image("Images/background.png","converted_background.png")
   def draw(self):
     player_pos = player.get_position()
     # converts the player coordinates to snap coordinates for the map image
@@ -77,9 +89,10 @@ class backgroundClass:
 background = backgroundClass()
 
 
-class entity:
+class entity(pygame.sprite.Sprite):
   # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
-  def __init__(self, radius, position, max_speed, colour):
+  def __init__(self, radius, position, max_speed, colour,image_location,image_destination):
+    pygame.sprite.Sprite.__init__(self)
     self.position = np.array(position)
     self.radius = radius
     self.velocity = np.array([0,0])
@@ -87,6 +100,8 @@ class entity:
     self.max_speed = max_speed
     self.colour = colour
     self.time_since_update = uptime
+    self.image,_,_ = resize_image(image_location,image_destination)
+    self.rect = self.image.get_rect()
   def set_position(self, new_position):
     self.position = np.array(new_position)
   def get_position(self):
@@ -112,7 +127,8 @@ class entity:
     self.position = self.position+self.velocity*time_difference
   def draw(self):
     # this will draw any entities onto the screen. currently defined as a coloured circle
-    pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
+    #pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
+    DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
   def is_touching(self,other_entity,other_coords = False):
     if type(other_coords) == np.ndarray:
       tested_position = other_coords
@@ -132,7 +148,7 @@ class playerClass(entity):
   health_points = 10
   health = 10
   def __init__(self, radius, position):
-    super().__init__(radius, position, 500, (0,0,255))
+    super().__init__(radius, position, 500, (0,0,255),"Images/player.png","converted_player.png")
   def move(self):
     global player_screen_offset 
     self.position = self.position+self.velocity*frame_time
@@ -163,7 +179,7 @@ class playerClass(entity):
 class enemy(entity):
   def __init__(self, radius, max_speed, position):
     self.time_since_damage = uptime
-    super().__init__(radius, position, max_speed,(255,0,0))
+    super().__init__(radius, position, max_speed,(255,0,0),"Images/enemy.png","converted_enemy.png")
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
     player_pos = player.get_position()
