@@ -11,7 +11,7 @@ scale = 720/1080
 DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
 player_screen_offset = np.array((1920,1080))/2
 pygame.display.set_caption('Hello World!')
-framerate = 60
+framerate = 120
 frame_time = 1/framerate
 clock = pygame.time.Clock()
 frames_rendered = 0
