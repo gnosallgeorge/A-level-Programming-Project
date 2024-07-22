@@ -19,6 +19,9 @@ uptime = 0
 
 ENEMY_SPAWN_RADIUS = 2000
 
+all_sprites = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+
 def vector_magnitude(vector):
   try:
     sum = (vector[0]**2)+(vector[1]**2)
@@ -45,7 +48,9 @@ def spawn_enemy_attempt(radius, max_speed):
       if not isinstance(i, entity) or vector_magnitude(spawn_pos-i.position)<=radius+i.radius:  
         valid_pos = False
   if valid_pos:  
-    enemies.append(enemy(radius,max_speed,spawn_pos))
+    new_enemy = enemy(radius,max_speed,spawn_pos)
+    all_sprites.add(new_enemy)
+    enemies.add(new_enemy)
     return True
   else:
     return False
@@ -142,7 +147,9 @@ class entity(pygame.sprite.Sprite):
       if (vector_magnitude(vect_diff) < collide_dist) and self != other_entity:
         return True
     return False
-
+  def update(self):
+    self.move()
+    self.draw()
 
 
 class playerClass(entity):
@@ -197,7 +204,10 @@ class enemy(entity):
     self.position = self.position+self.velocity*time_difference
     display_position = self.position-player_screen_offset
     if (display_position[0] <= 1920 and display_position[0] >= 0) and (display_position[1] <= 1080 and display_position[1] >= 0):
-      collision_check = enemies + [player]
+      collision_check = enemies.copy()
+      collision_check.remove(self)
+      collision_check.add(player)
+      collision_check = collision_check.sprites()
       for i in collision_check:
         if self.is_touching(i) and isinstance(i, entity):
           displacement_vect = self.position - i.position
@@ -211,7 +221,7 @@ class enemy(entity):
 total = 0
 
 player = playerClass(100, [0,0])
-enemies = []
+all_sprites.add(player)
 for i in range(50):
   spawn_enemy_attempt(50,100)
 while True:
@@ -227,9 +237,8 @@ while True:
   background.draw()
   #pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
   #pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
-  for individual_enemy in range(len(enemies)):
-    enemies[individual_enemy].move()
-    enemies[individual_enemy].draw()
+  
+  enemies.update()
   
   player.check_if_damaged()
   player.move()
