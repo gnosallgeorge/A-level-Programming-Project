@@ -207,14 +207,14 @@ class enemy(entity):
       collision_check = enemies.copy()
       collision_check.remove(self)
       collision_check.add(player)
-      collision_check = collision_check.sprites()
       for i in collision_check:
-        if self.is_touching(i) and isinstance(i, entity):
+        if pygame.sprite.collide_circle(self,i):
           displacement_vect = self.position - i.position
           combined_radius = self.radius + i.radius
           scale = (combined_radius/vector_magnitude(displacement_vect))-1
           movement = displacement_vect*scale
           self.position = self.position + movement
+      collision_check.empty()
     self.rect[0:2] = self.position
 
 
