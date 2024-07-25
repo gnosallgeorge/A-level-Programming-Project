@@ -135,11 +135,15 @@ class entity(pygame.sprite.Sprite):
   def draw(self):
     # this will draw any entities onto the screen. currently defined as a coloured circle
     #pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
+    #debug code thad draws an outline box around all entities
+    """
     drawing_rect = self.rect.copy()
     drawing_rect = drawing_rect.move(-player_screen_offset)#.move(-self.radius,-self.radius)
     drawing_rect = pygame.Rect(drawing_rect[0]*scale,drawing_rect[1]*scale,drawing_rect[2]*scale,drawing_rect[3]*scale)
-    DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
     pygame.draw.rect(DISPLAYSURF, (0,0,0),drawing_rect,width = 3)
+    """
+    DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
+    
   def is_touching(self,other_entity,other_coords = False):
     if type(other_coords) == np.ndarray:
       tested_position = other_coords
