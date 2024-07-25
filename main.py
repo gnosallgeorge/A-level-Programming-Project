@@ -106,8 +106,8 @@ class entity(pygame.sprite.Sprite):
     self.colour = colour
     self.time_since_update = uptime
     self.image,_,_ = resize_image(image_location,image_destination)
-    self.rect = self.image.get_rect()
-    self.rect[0:2] = self.position
+    self.rect = pygame.Rect(self.position,(radius*2,radius*2))
+    #self.rect[0:2] = self.position
   def set_position(self, new_position):
     self.position = np.array(new_position)
   def get_position(self):
@@ -131,11 +131,15 @@ class entity(pygame.sprite.Sprite):
     time_difference = uptime - self.time_since_update
     self.time_since_update = uptime
     self.position = self.position+self.velocity*time_difference
-    self.rect[0:2] = self.position
+    self.rect[0:2] = self.position-np.array((self.radius,self.radius))
   def draw(self):
     # this will draw any entities onto the screen. currently defined as a coloured circle
     #pygame.draw.circle(DISPLAYSURF,self.colour,(self.position-player_screen_offset)*scale,int(self.radius*scale))
+    drawing_rect = self.rect.copy()
+    drawing_rect = drawing_rect.move(-player_screen_offset)#.move(-self.radius,-self.radius)
+    drawing_rect = pygame.Rect(drawing_rect[0]*scale,drawing_rect[1]*scale,drawing_rect[2]*scale,drawing_rect[3]*scale)
     DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
+    pygame.draw.rect(DISPLAYSURF, (0,0,0),drawing_rect,width = 3)
   def is_touching(self,other_entity,other_coords = False):
     if type(other_coords) == np.ndarray:
       tested_position = other_coords
@@ -163,7 +167,7 @@ class playerClass(entity):
     global player_screen_offset 
     self.position = self.position+self.velocity*frame_time
     player_screen_offset = self.position - np.array((1920,1080))/2
-    self.rect[0:2] = self.position
+    self.rect[0:2] = self.position-np.array((self.radius,self.radius))
   def check_input(self):
     if pressed_keys[pygame.K_w] != pressed_keys[pygame.K_s]:
       if pressed_keys[pygame.K_w]:
@@ -215,7 +219,7 @@ class enemy(entity):
           movement = displacement_vect*scale
           self.position = self.position + movement
       collision_check.empty()
-    self.rect[0:2] = self.position
+    self.rect[0:2] = self.position-np.array((self.radius,self.radius))
 
 
 total = 0
