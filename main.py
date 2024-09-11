@@ -16,6 +16,7 @@ frame_time = 1/framerate
 clock = pygame.time.Clock()
 frames_rendered = 0
 uptime = 0
+num_enemies_spawned = 0
 
 ENEMY_SPAWN_RADIUS = 2000
 
@@ -31,7 +32,9 @@ def vector_magnitude(vector):
 def spawn_enemy_attempt(radius, max_speed):
   # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
   # Trigonometry is then used to determine the x and y coordinates of the enemy relative to the player.
-  # These values are then added to the player position.
+  # These values are then added to the player position to get a potential spawning position. 
+  # If the enemy spawn collides with an existing enemy the spawn attempt will cancel and a new location will be chosen. 
+  # In the event that an enemy has not found a spawn location in 5 attempts the spawn attempt will fail.
   player_pos = player.get_position()
   valid_pos = False
   count = 0
@@ -63,6 +66,9 @@ def resize_image(source,dest):
   background_image = ImageOps.fit(original_image, (width,height)).save(dest)
   background_image = pygame.image.load(dest).convert_alpha()
   return background_image, image_size, scaled_image_size
+#def find_num_enemies_to_spawn():
+#  total_num_enemies = 
+
 
 class backgroundClass:
   def __init__(self):
