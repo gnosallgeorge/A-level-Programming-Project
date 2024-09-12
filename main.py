@@ -18,7 +18,11 @@ frames_rendered = 0
 uptime = 0
 num_enemies_spawned = 0
 
+#temp
+t_since_last = 0
+
 ENEMY_SPAWN_RADIUS = 2000
+ENEMY_DESPAWN_RADIUS = 6000
 
 all_sprites = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
@@ -217,8 +221,13 @@ class enemy(entity):
     player_pos = player.get_position()
     vect_difference = player_pos - self.position
     self.set_direction(vect_difference)
+  def despawn_check(self):
+    player_pos = player.get_position()
+    distance_from_player = vector_magnitude(player_pos-self.position)
+    return distance_from_player >= ENEMY_DESPAWN_RADIUS
   def move(self):
     #redefined from entity class so that the enemy points towards the player before moving
+    #After moving the enemy will check if it is outside of the despawn circle. If it is it will be killed.
     self.point_towards_player()
     time_difference = uptime - self.time_since_update
     self.time_since_update = uptime
@@ -237,6 +246,8 @@ class enemy(entity):
           self.position = self.position + movement
       collision_check.empty()
     self.rect[0:2] = self.position-np.array((self.radius,self.radius))
+    if self.despawn_check():
+      pygame.sprite.Sprite.kill(self)
 
 
 total = 0
@@ -266,7 +277,10 @@ while True:
   player.check_if_damaged()
   player.move()
   player.draw()
-  print(1/frame_time)
+  if uptime-t_since_last>1:
+    t_since_last = uptime
+    print(1/frame_time)
+    print(len(enemies))
   frame_time = clock.tick(framerate)/1000
   uptime += frame_time
   frames_rendered += 1
