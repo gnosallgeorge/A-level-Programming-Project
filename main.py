@@ -30,6 +30,7 @@ def vector_magnitude(vector):
   except:
     return 0
 def spawn_enemy_attempt(radius, max_speed):
+  global num_enemies_spawned
   # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
   # Trigonometry is then used to determine the x and y coordinates of the enemy relative to the player.
   # These values are then added to the player position to get a potential spawning position. 
@@ -54,6 +55,7 @@ def spawn_enemy_attempt(radius, max_speed):
     new_enemy = enemy(radius,max_speed,spawn_pos)
     all_sprites.add(new_enemy)
     enemies.add(new_enemy)
+    num_enemies_spawned += 1
     return True
   else:
     return False
@@ -66,8 +68,13 @@ def resize_image(source,dest):
   background_image = ImageOps.fit(original_image, (width,height)).save(dest)
   background_image = pygame.image.load(dest).convert_alpha()
   return background_image, image_size, scaled_image_size
-#def find_num_enemies_to_spawn():
-#  total_num_enemies = 
+def find_num_enemies_to_spawn():
+  total_num_enemies = (10*uptime + (uptime**2/20) + ((uptime**3)/6000))/60
+  enemies_to_spawn = total_num_enemies - num_enemies_spawned
+  if enemies_to_spawn < 0:
+    return 0
+  else:
+    return int(enemies_to_spawn)
 
 
 class backgroundClass:
@@ -236,8 +243,8 @@ total = 0
 
 player = playerClass(100, [0,0])
 all_sprites.add(player)
-for i in range(50):
-  spawn_enemy_attempt(50,100)
+#for i in range(50):
+#  spawn_enemy_attempt(50,100)
 while True:
   for event in pygame.event.get():
     if event.type == QUIT:
@@ -251,6 +258,8 @@ while True:
   background.draw()
   #pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
   #pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
+  for i in range(find_num_enemies_to_spawn()):
+    spawn_enemy_attempt(50,100)
   
   enemies.update()
   
