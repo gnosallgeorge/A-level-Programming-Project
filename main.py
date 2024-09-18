@@ -179,8 +179,8 @@ class entity(pygame.sprite.Sprite):
 
 class playerClass(entity):
   # player specific code such as weapons, exp and health will stay in this class
-  health_points = 10
-  health = 10
+  max_health = 10
+  health = max_health
   def __init__(self, radius, position):
     super().__init__(radius, position, 500, (0,0,255),"Images/player.png","converted_player.png")
   def move(self):
@@ -206,15 +206,14 @@ class playerClass(entity):
       self.set_x_direction(0)
   def check_if_damaged(self):
     for i in enemies:
-      distance = vector_magnitude(self.position-i.position)
-      if distance <= self.radius + i.radius and uptime - i.time_since_damage >2:
+      if pygame.sprite.collide_circle(self,i) and uptime - i.time_since_damaging_player >2:
         self.health -= 1
-        i.time_since_damage = uptime
+        i.time_since_damaging_player = uptime
 
 
 class enemy(entity):
   def __init__(self, radius, max_speed, position):
-    self.time_since_damage = uptime
+    self.time_since_damaging_player = 0
     super().__init__(radius, position, max_speed,(255,0,0),"Images/enemy.png","converted_enemy.png")
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
@@ -246,6 +245,7 @@ class enemy(entity):
           self.position = self.position + movement
       collision_check.empty()
     self.rect[0:2] = self.position-np.array((self.radius,self.radius))
+    # Delete enemies if they are too far from the player
     if self.despawn_check():
       pygame.sprite.Sprite.kill(self)
 
@@ -277,6 +277,7 @@ while True:
   player.check_if_damaged()
   player.move()
   player.draw()
+  # print(player.health)
   if uptime-t_since_last>1:
     t_since_last = uptime
     print(1/frame_time)
