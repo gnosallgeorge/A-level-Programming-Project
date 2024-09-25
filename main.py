@@ -11,6 +11,8 @@ scale = 720/1080
 DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
 player_screen_offset = np.array((1920,1080))/2
 pygame.display.set_caption('Hello World!')
+pygame.font.init()
+main_font = pygame.font.SysFont("Arial-Bold",50)
 framerate = 120
 frame_time = 1/framerate
 clock = pygame.time.Clock()
@@ -160,7 +162,6 @@ class entity(pygame.sprite.Sprite):
     pygame.draw.rect(DISPLAYSURF, (0,0,0),drawing_rect,width = 3)
     """
     DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
-    
   def is_touching(self,other_entity,other_coords = False):
     if type(other_coords) == np.ndarray:
       tested_position = other_coords
@@ -189,18 +190,26 @@ class playerClass(entity):
     self.position = self.position+self.velocity*frame_time
     player_screen_offset = self.position - np.array((1920,1080))/2
     self.rect[0:2] = self.position-np.array((self.radius,self.radius))
+  def draw(self):
+    #redefined so that the player's health is displayed above player
+    #the text is rendered and then scaled down before being displayed
+    text_surface = main_font.render(str(self.health)+"/"+str(self.max_health), False, (0, 0, 0))
+    text_width = int(text_surface.get_width())
+    text_surface = pygame.transform.scale_by(text_surface,scale)
+    DISPLAYSURF.blit(text_surface,(self.position-player_screen_offset-np.array((text_width/2,self.radius*1.5)))*scale)
+    DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
   def check_input(self):
     if pressed_keys[pygame.K_w] != pressed_keys[pygame.K_s]:
       if pressed_keys[pygame.K_w]:
         self.set_y_direction(-1)
-      if pressed_keys[pygame.K_s]:
+      elif pressed_keys[pygame.K_s]:
         self.set_y_direction(1)
     else:
       self.set_y_direction(0)
     if pressed_keys[pygame.K_a] != pressed_keys[pygame.K_d]:
       if pressed_keys[pygame.K_a]:
         self.set_x_direction(-1)
-      if pressed_keys[pygame.K_d]:
+      elif pressed_keys[pygame.K_d]:
         self.set_x_direction(1)
     else:
       self.set_x_direction(0)
