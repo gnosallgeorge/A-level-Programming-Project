@@ -7,18 +7,20 @@ import random
 import time
 
 pygame.init()
-scale = 720/1080
+scale = 480/1080
 DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
 player_screen_offset = np.array((1920,1080))/2
 pygame.display.set_caption('Hello World!')
-pygame.font.init()
-main_font = pygame.font.SysFont("Arial-Bold",50)
+main_font = pygame.font.Font("Fonts\ezarion\Ezarion-Black.ttf",40)
 framerate = 120
 frame_time = 1/framerate
 clock = pygame.time.Clock()
 frames_rendered = 0
 uptime = 0
 num_enemies_spawned = 0
+experience = 0
+total_experience = 0
+current_level = 0
 
 #temp
 t_since_last = 0
@@ -257,12 +259,30 @@ class enemy(entity):
     # Delete enemies if they are too far from the player
     if self.despawn_check():
       pygame.sprite.Sprite.kill(self)
+  def on_death(self):
+    experience += 1
+    total_experience += 1
+    pygame.sprite.Sprite.kill(self)
+    
+class experience():
+  def __init__(self):
+    self.colour = (128,0,0)
+  def update(self):
+    a = 1/100000
+    b = 1
+    c = 8
+    next_level = current_level+1
+    exp_to_level_up = int((b-(-4*a*(next_level-8)+b**2)**(1/2))/(2*a))
+    print(exp_to_level_up)
+  def draw(self):
+    pygame.draw.rect(DISPLAYSURF, self.colour,pygame.Rect(np.array((0,0,1000,20))*scale))
 
 
 total = 0
 
 player = playerClass(100, [0,0])
 all_sprites.add(player)
+experience = experience()
 #for i in range(50):
 #  spawn_enemy_attempt(50,100)
 while True:
@@ -287,10 +307,13 @@ while True:
   player.move()
   player.draw()
   # print(player.health)
+  experience.update()
+  experience.draw()
   if uptime-t_since_last>1:
     t_since_last = uptime
     print(1/frame_time)
     print(len(enemies))
+    current_level += 1
   frame_time = clock.tick(framerate)/1000
   uptime += frame_time
   frames_rendered += 1
