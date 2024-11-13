@@ -11,7 +11,7 @@ scale = 480/1080
 DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
 player_screen_offset = np.array((1920,1080))/2
 pygame.display.set_caption('Hello World!')
-main_font = pygame.font.Font("Fonts\ezarion\Ezarion-Black.ttf",40)
+main_font = pygame.font.Font("Fonts\\ezarion\\Ezarion-Black.ttf",40)
 framerate = 120
 frame_time = 1/framerate
 clock = pygame.time.Clock()
@@ -285,7 +285,27 @@ class experience():
       # Todo Notify player of a level up
       self.update()
   def draw(self):
-    pygame.draw.rect(DISPLAYSURF, self.colour,pygame.Rect(np.array((0,0,1920*self.progress_to_next_level,20))*scale))
+    level_box_width = 100
+    text_size = 50
+    exp_bar_height = 20
+    level_font = pygame.font.Font("Fonts\\ezarion\\Ezarion-Black.ttf",text_size)
+    text_surface = level_font.render(str(current_level), False, (0, 0, 0))
+    text_width = int(text_surface.get_width())
+    text_height = int(text_surface.get_height())
+    text_surface = pygame.transform.scale_by(text_surface,scale)
+    text_centre_pos = np.array((text_width/2,text_height/2))
+    exp_bar_size = np.array((level_box_width,0,(1920-level_box_width)*self.progress_to_next_level,exp_bar_height))
+
+    pygame.draw.rect(DISPLAYSURF, (128,128,255),
+                     pygame.Rect(np.array((0,0,level_box_width,level_box_width))*scale)) #Draw box
+    pygame.draw.rect(DISPLAYSURF, (0,0,0),
+                     pygame.Rect(np.array((0,0,level_box_width,level_box_width))*scale),
+                     int(10*scale)) #Draw Border
+    DISPLAYSURF.blit(text_surface,
+                     (np.array((level_box_width,level_box_width))/2-text_centre_pos)*scale) #Display level
+    pygame.draw.rect(DISPLAYSURF, self.colour,pygame.Rect(exp_bar_size*scale)) #Display progress bar
+
+
 
 
 total = 0
