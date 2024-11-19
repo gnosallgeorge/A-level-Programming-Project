@@ -82,6 +82,25 @@ def find_num_enemies_to_spawn():
     return 0
   else:
     return int(enemies_to_spawn)
+def closest_enemy(self):
+  distance_check = enemies.copy()
+  closest_enemy = False
+  closest_distance = -1
+  for enemy in distance_check:
+    distance = vector_magnitude(self.pos-enemy.pos)
+    if closest_enemy == False or closest_distance < 0:
+      closest_enemy = enemy
+      closest_distance = distance
+    elif distance < closest_distance:
+      closest_enemy = enemy
+      closest_distance = distance
+  if closest_enemy == False:
+    return False
+  else:
+    return closest_enemy
+
+
+
 
 
 class backgroundClass:
@@ -289,18 +308,17 @@ class experience():
     text_size = 50
     exp_bar_height = 20
     level_font = pygame.font.Font("Fonts\\ezarion\\Ezarion-Black.ttf",text_size)
-    text_surface = level_font.render(str(current_level), False, (0, 0, 0))
+    text_surface = level_font.render(str(current_level), False, (255, 255, 255))
     text_width = int(text_surface.get_width())
     text_height = int(text_surface.get_height())
     text_surface = pygame.transform.scale_by(text_surface,scale)
     text_centre_pos = np.array((text_width/2,text_height/2))
     exp_bar_size = np.array((level_box_width,0,(1920-level_box_width)*self.progress_to_next_level,exp_bar_height))
 
-    pygame.draw.rect(DISPLAYSURF, (128,128,255),
+    pygame.draw.rect(DISPLAYSURF, (17,17,129),
                      pygame.Rect(np.array((0,0,level_box_width,level_box_width))*scale)) #Draw box
     pygame.draw.rect(DISPLAYSURF, (0,0,0),
-                     pygame.Rect(np.array((0,0,level_box_width,level_box_width))*scale),
-                     int(10*scale)) #Draw Border
+                     pygame.Rect(np.array((0,0,level_box_width,level_box_width))*scale), int(10*scale)) #Draw Border
     DISPLAYSURF.blit(text_surface,
                      (np.array((level_box_width,level_box_width))/2-text_centre_pos)*scale) #Display level
     pygame.draw.rect(DISPLAYSURF, self.colour,pygame.Rect(exp_bar_size*scale)) #Display progress bar
