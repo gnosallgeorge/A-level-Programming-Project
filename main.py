@@ -12,7 +12,7 @@ DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
 player_screen_offset = np.array((1920,1080))/2
 pygame.display.set_caption('Hello World!')
 main_font = pygame.font.Font("Fonts\\ezarion\\Ezarion-Black.ttf",40)
-framerate = 120
+framerate = 240
 frame_time = 1/framerate
 clock = pygame.time.Clock()
 frames_rendered = 0
@@ -86,22 +86,24 @@ def closest_enemy(self):
   distance_check = enemies.copy()
   closest_enemy = False
   closest_distance = -1
-  for enemy in distance_check:
-    distance = vector_magnitude(self.pos-enemy.pos)
+  for enemy in distance_check: #find closest enemy loop
+    try:
+      distance = vector_magnitude(self.position-enemy.position)
+    except:
+      print("faulty position data")
     if closest_enemy == False or closest_distance < 0:
       closest_enemy = enemy
       closest_distance = distance
     elif distance < closest_distance:
       closest_enemy = enemy
       closest_distance = distance
-  if closest_enemy == False:
+  distance_check.empty() #remove group to reduce lag
+  if closest_enemy == False or closest_distance<0:
     return False
   else:
+    #pygame.draw.circle(DISPLAYSURF,(17,17,127),(closest_enemy.position-player_screen_offset)*scale,64*scale,int(10*scale))
+    #print(closest_enemy.position)
     return closest_enemy
-
-
-
-
 
 class backgroundClass:
   def __init__(self):
@@ -131,7 +133,6 @@ class backgroundClass:
         DISPLAYSURF.blit(self.background_image, (((player_grid_pos+offset))*self.scaled_image_size-(player_screen_offset*scale)))
 
 background = backgroundClass()
-
 
 class entity(pygame.sprite.Sprite):
   # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
@@ -197,7 +198,6 @@ class entity(pygame.sprite.Sprite):
     self.move()
     self.draw()
 
-
 class playerClass(entity):
   # player specific code such as weapons, exp and health will stay in this class
   max_health = 10
@@ -238,7 +238,6 @@ class playerClass(entity):
       if pygame.sprite.collide_circle(self,i) and uptime - i.time_since_damaging_player >2:
         self.health -= 1
         i.time_since_damaging_player = uptime
-
 
 class enemy(entity):
   def __init__(self, radius, max_speed, position):
@@ -323,9 +322,6 @@ class experience():
                      (np.array((level_box_width,level_box_width))/2-text_centre_pos)*scale) #Display level
     pygame.draw.rect(DISPLAYSURF, self.colour,pygame.Rect(exp_bar_size*scale)) #Display progress bar
 
-
-
-
 total = 0
 
 player = playerClass(100, [0,0])
@@ -355,6 +351,7 @@ while True:
   player.check_if_damaged()
   player.move()
   player.draw()
+  closest_enemy(player)
   # print(player.health)
   
   if uptime-t_since_last>1:
