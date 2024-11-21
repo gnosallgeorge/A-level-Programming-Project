@@ -83,21 +83,20 @@ def find_num_enemies_to_spawn():
   else:
     return int(enemies_to_spawn)
 def closest_enemy(self):
-  distance_check = enemies.copy()
   closest_enemy = False
   closest_distance = -1
-  for enemy in distance_check: #find closest enemy loop
+  for enemy in enemies: #find closest enemy loop
     try:
       distance = vector_magnitude(self.position-enemy.position)
     except:
       print("faulty position data")
+      distance = -1
     if closest_enemy == False or closest_distance < 0:
       closest_enemy = enemy
       closest_distance = distance
     elif distance < closest_distance:
       closest_enemy = enemy
       closest_distance = distance
-  distance_check.empty() #remove group to reduce lag
   if closest_enemy == False or closest_distance<0:
     return False
   else:
@@ -280,7 +279,28 @@ class enemy(entity):
     experience += 1
     total_experience += 1
     pygame.sprite.Sprite.kill(self)
-    
+
+class bullet(entity):
+  def __init__(self, position, radius, speed, damage, angle, pierce, image_location, image_destination):
+    super().__init__(radius,position,speed,(0,0,0),image_location,image_destination)
+    self.damage_multiplier = damage
+    self.pierce = pierce
+    self.set_direction(np.array((np.cos(angle),np.sin(angle))))
+    self.last_enemy_touched = False
+  def set_angle(self,angle):
+    self.set_direction(np.array((np.cos(angle),np.sin(angle))))
+  def remove_self(self):
+    pygame.sprite.Sprite.kill(self)
+  def is_touching_wall(self):
+    global player_pos
+    distance_from_player = player_pos-self.position
+    if distance_from_player[0] > 1920/2 or distance_from_player[0] < -1920/2:
+      pygame.sprite.Sprite.kill(self)
+
+      
+  
+
+
 class experience():
   def __init__(self):
     self.colour = (128,0,0)
