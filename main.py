@@ -29,6 +29,7 @@ ENEMY_DESPAWN_RADIUS = 6000
 
 all_sprites = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 
 def vector_magnitude(vector):
   try:
@@ -276,26 +277,40 @@ class enemy(entity):
     if self.despawn_check():
       pygame.sprite.Sprite.kill(self)
   def on_death(self):
-    experience += 1
     total_experience += 1
+    experience.update()
     pygame.sprite.Sprite.kill(self)
 
 class bullet(entity):
-  def __init__(self, position, radius, speed, damage, angle, pierce, image_location, image_destination):
+  def __init__(self, position, speed, damage, angle, pierce, image_location, image_destination):
+    image = Image.open(image_location)
+    radius = image.width/2
     super().__init__(radius,position,speed,(0,0,0),image_location,image_destination)
     self.damage_multiplier = damage
     self.pierce = pierce
     self.set_direction(np.array((np.cos(angle),np.sin(angle))))
     self.last_enemy_touched = False
+    all_sprites.add(self)
+    bullets.add(self)
   def set_angle(self,angle):
     self.set_direction(np.array((np.cos(angle),np.sin(angle))))
   def remove_self(self):
     pygame.sprite.Sprite.kill(self)
   def is_touching_wall(self):
-    global player_pos
-    distance_from_player = player_pos-self.position
-    if distance_from_player[0] > 1920/2 or distance_from_player[0] < -1920/2:
-      pygame.sprite.Sprite.kill(self)
+    distance_from_player = player.position-self.position
+    if distance_from_player[0] > 1920/2 \
+    or distance_from_player[0] < -1920/2 \
+    or distance_from_player[1] > 1080/2 \
+    or distance_from_player[1] < -1080/2:
+      return True
+    else:
+      return False
+  def move(self):
+    if self.is_touching_wall():
+      self.remove_self()
+    else:
+      super().move()
+  
 
       
   
@@ -372,14 +387,14 @@ while True:
   player.move()
   player.draw()
   closest_enemy(player)
+  bullets.update()
   # print(player.health)
   
   if uptime-t_since_last>1:
     t_since_last = uptime
     print(1/frame_time)
     print(len(enemies))
-    total_experience += 5
-    experience.update()
+    bullet(player.position,100,1,np.pi,0,"Images/musket_bullet.png","converted_musket_bullet.png")
   experience.draw()
 
   frame_time = clock.tick(framerate)/1000
