@@ -289,9 +289,10 @@ class bullet(entity):
     self.damage_multiplier = damage
     self.pierce = pierce
     self.set_direction(np.array((np.cos(angle),np.sin(angle))))
-    self.last_enemy_touched = False
+    self.last_entity_touched = False
     all_sprites.add(self)
     bullets.add(self)
+    self.collision_group = enemies
   def set_angle(self,angle):
     self.set_direction(np.array((np.cos(angle),np.sin(angle))))
   def remove_self(self):
@@ -305,11 +306,24 @@ class bullet(entity):
       return True
     else:
       return False
+  def collides_with_entity(self):
+    for entity in self.collision_group:
+      if pygame.sprite.collide_circle(self,entity):
+        #pygame.draw.circle(DISPLAYSURF,(0,0,255),(entity.position-player_screen_offset)*scale,50)
+        return entity
+    return False
   def move(self):
+    super().move()
+    collided_entity = self.collides_with_entity()
     if self.is_touching_wall():
       self.remove_self()
-    else:
-      super().move()
+    elif collided_entity != self.last_entity_touched and collided_entity != False:
+      self.last_entity_touched = collided_entity
+      self.pierce -= 1
+      # damage enemy here
+      if self.pierce < 0:
+        self.remove_self()
+
   
 
       
