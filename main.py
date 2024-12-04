@@ -20,6 +20,7 @@ uptime = 0
 num_enemies_spawned = 0
 total_experience = 0
 current_level = 0
+player_base_damage = 50
 
 #temp
 t_since_last = 0
@@ -37,7 +38,7 @@ def vector_magnitude(vector):
     return np.sqrt(sum)
   except:
     return 0
-def spawn_enemy_attempt(radius, max_speed):
+def spawn_enemy_attempt(radius, max_speed, max_health):
   global num_enemies_spawned
   # The position is calculated by generating a random angle that represents the angle between the player and the enemy.
   # Trigonometry is then used to determine the x and y coordinates of the enemy relative to the player.
@@ -60,7 +61,7 @@ def spawn_enemy_attempt(radius, max_speed):
       if not isinstance(i, entity) or vector_magnitude(spawn_pos-i.position)<=radius+i.radius:  
         valid_pos = False
   if valid_pos:  
-    new_enemy = enemy(radius,max_speed,spawn_pos)
+    new_enemy = enemy(radius,max_speed,spawn_pos, max_health)
     all_sprites.add(new_enemy)
     enemies.add(new_enemy)
     num_enemies_spawned += 1
@@ -240,8 +241,11 @@ class playerClass(entity):
         i.time_since_damaging_player = uptime
 
 class enemy(entity):
-  def __init__(self, radius, max_speed, position):
+  def __init__(self, radius, max_speed, position, max_health, health = 0):
     self.time_since_damaging_player = 0
+    self.max_health = max_health
+    if health == 0:
+      self.health = max_health
     super().__init__(radius, position, max_speed,(255,0,0),"Images/enemy.png","converted_enemy.png")
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
@@ -277,9 +281,14 @@ class enemy(entity):
     if self.despawn_check():
       pygame.sprite.Sprite.kill(self)
   def on_death(self):
+    global total_experience
     total_experience += 1
     experience.update()
     pygame.sprite.Sprite.kill(self)
+  def deal_damage(self, damage):
+    self.health -= damage
+    if self.health <= 0:
+      self.on_death()
 
 class bullet(entity):
   def __init__(self, position, speed, damage, angle, pierce, image_location, image_destination):
@@ -321,6 +330,7 @@ class bullet(entity):
       self.last_entity_touched = collided_entity
       self.pierce -= 1
       # damage enemy here
+      collided_entity.deal_damage(player_base_damage*self.damage_multiplier)
       if self.pierce < 0:
         self.remove_self()
 
@@ -393,7 +403,7 @@ while True:
   #pygame.draw.rect(DISPLAYSURF, (0,0,0),pygame.Rect(0,0,100,100))
   #pygame.draw.circle(DISPLAYSURF,(0,0,255),(50,150),50)
   for i in range(find_num_enemies_to_spawn()):
-    spawn_enemy_attempt(50,100)
+    spawn_enemy_attempt(50,100,100)
   
   enemies.update()
   
@@ -408,7 +418,7 @@ while True:
     t_since_last = uptime
     print(1/frame_time)
     print(len(enemies))
-    bullet(player.position,100,1,np.pi,0,"Images/musket_bullet.png","converted_musket_bullet.png")
+    bullet(player.position,700,1,np.pi,1,"Images/musket_bullet.png","converted_musket_bullet.png")
   experience.draw()
 
   frame_time = clock.tick(framerate)/1000
