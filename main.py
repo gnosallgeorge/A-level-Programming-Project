@@ -5,6 +5,7 @@ import numpy as np
 import math as maths
 import random
 import time
+import json
 
 pygame.init()
 scale = 480/1080
@@ -137,7 +138,7 @@ background = backgroundClass()
 
 class entity(pygame.sprite.Sprite):
   # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
-  def __init__(self, radius, position, max_speed, colour,image_location,image_destination):
+  def __init__(self, radius, position, max_speed, colour,image_location,image_destination, animation_json = False):
     pygame.sprite.Sprite.__init__(self)
     self.position = np.array(position)
     self.radius = radius
@@ -148,6 +149,14 @@ class entity(pygame.sprite.Sprite):
     self.time_since_update = uptime
     self.image,_,_ = resize_image(image_location,image_destination)
     self.rect = pygame.Rect(self.position,(radius*2,radius*2))
+    if animation_json != False:
+      try:
+        with open(animation_json) as f:
+          animation_info = json.load(f)
+      except:
+        animation_info = False
+    else:
+      animation_info = False
     #self.rect[0:2] = self.position
   def set_position(self, new_position):
     self.position = np.array(new_position)
