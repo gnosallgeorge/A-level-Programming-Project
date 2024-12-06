@@ -62,7 +62,7 @@ def spawn_enemy_attempt(radius, max_speed, max_health):
       if not isinstance(i, entity) or vector_magnitude(spawn_pos-i.position)<=radius+i.radius:  
         valid_pos = False
   if valid_pos:  
-    new_enemy = enemy(radius,max_speed,spawn_pos, max_health)
+    new_enemy = enemy(radius,max_speed,spawn_pos, max_health,animation_json="Images\\Slime\\animation_info.json")
     all_sprites.add(new_enemy)
     enemies.add(new_enemy)
     num_enemies_spawned += 1
@@ -150,13 +150,16 @@ class entity(pygame.sprite.Sprite):
     self.image,_,_ = resize_image(image_location,image_destination)
     self.rect = pygame.Rect(self.position,(radius*2,radius*2))
     if animation_json != False:
-      try:
-        with open(animation_json) as f:
-          animation_info = json.load(f)
-      except:
-        animation_info = False
+      #try:
+      with open(animation_json) as f:
+        self.animation_info = json.load(f)
+        
+      self.frame_dict = self.set_animation()
+      #except:
+      #  print("failed")
+      #  self.animation_info = False
     else:
-      animation_info = False
+      self.animation_info = False
     #self.rect[0:2] = self.position
   def set_position(self, new_position):
     self.position = np.array(new_position)
@@ -207,6 +210,36 @@ class entity(pygame.sprite.Sprite):
   def update(self):
     self.move()
     self.draw()
+  def set_animation(self):
+    global scale
+    num_frames = self.animation_info["num_of_frames"]
+    frame_dict = {}
+    for instance in self.animation_info["instances"]:
+      frame_dict[instance] = {}
+      for motion in self.animation_info["motions"]:
+        frame_dict[instance][motion]=[]
+        for i in range(num_frames):
+          try:
+            source = self.animation_info["base_file_path"] + "\\" + instance \
+                      + "\\" + motion + "\\Frame" + str(i+1) + ".png"
+            dest = "Converted\\"+ self.animation_info["name"] + "\\" + instance \
+                      + "\\" + motion + "\\Frame" + str(i+1) + ".png"
+            print(dest)
+            original_image = Image.open(source)
+            image_size = np.array(original_image.size)
+            scaled_image_size = np.trunc(self.radius*2*scale)
+            scale = scaled_image_size/image_size[0]
+            background_image = ImageOps.scale(original_image, scale).save(dest)
+            background_image = pygame.image.load(dest).convert_alpha()
+            frame_dict[instance][motion].append(background_image)
+          except:
+            pass
+    return frame_dict
+        
+
+
+
+
 
 class playerClass(entity):
   # player specific code such as weapons, exp and health will stay in this class
@@ -250,12 +283,12 @@ class playerClass(entity):
         i.time_since_damaging_player = uptime
 
 class enemy(entity):
-  def __init__(self, radius, max_speed, position, max_health, health = 0):
+  def __init__(self, radius, max_speed, position, max_health, health = 0, animation_json = False):
     self.time_since_damaging_player = 0
     self.max_health = max_health
     if health == 0:
       self.health = max_health
-    super().__init__(radius, position, max_speed,(255,0,0),"Images/enemy.png","converted_enemy.png")
+    super().__init__(radius, position, max_speed,(255,0,0),"Images/enemy.png","converted_enemy.png", animation_json=animation_json)
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
     player_pos = player.get_position()

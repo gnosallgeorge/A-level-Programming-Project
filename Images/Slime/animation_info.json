@@ -2,5 +2,6 @@
     "motions": ["Move", "Dead","Idle"],
     "instances": ["Normal", "hurt"],
     "num_of_frames": 4,
-    "base_file_path":"Images\\Slime"
+    "base_file_path":"Images\\Slime",
+    "name":"Slime"
 }
