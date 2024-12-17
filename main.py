@@ -22,6 +22,7 @@ num_enemies_spawned = 0
 total_experience = 0
 current_level = 0
 player_base_damage = 50
+pierce = 2
 
 #temp
 t_since_last = 0
@@ -62,7 +63,7 @@ def spawn_enemy_attempt(radius, max_speed, max_health):
       if not isinstance(i, entity) or vector_magnitude(spawn_pos-i.position)<=radius+i.radius:  
         valid_pos = False
   if valid_pos:  
-    new_enemy = enemy(radius,max_speed,spawn_pos, max_health,animation_json="Images\\Slime\\animation_info.json")
+    new_enemy = enemy(radius,max_speed,spawn_pos, max_health,hurt_image = ("Images\\Skull\\Hurt.png","Skull_Hurt.png"))
     all_sprites.add(new_enemy)
     enemies.add(new_enemy)
     num_enemies_spawned += 1
@@ -149,7 +150,8 @@ class entity(pygame.sprite.Sprite):
     self.time_since_update = uptime
     self.image,_,_ = resize_image(image_location,image_destination)
     self.rect = pygame.Rect(self.position,(radius*2,radius*2))
-    if animation_json != False:
+
+    """if animation_json != False:
       #try:
       with open(animation_json) as f:
         self.animation_info = json.load(f)
@@ -160,7 +162,7 @@ class entity(pygame.sprite.Sprite):
       #  self.animation_info = False
     else:
       self.animation_info = False
-    #self.rect[0:2] = self.position
+    #self.rect[0:2] = self.position"""
   def set_position(self, new_position):
     self.position = np.array(new_position)
   def get_position(self):
@@ -211,6 +213,7 @@ class entity(pygame.sprite.Sprite):
     self.move()
     self.draw()
   def set_animation(self):
+    """
     global scale
     num_frames = self.animation_info["num_of_frames"]
     frame_dict = {}
@@ -235,6 +238,8 @@ class entity(pygame.sprite.Sprite):
           except:
             pass
     return frame_dict
+    """
+    pass
         
 
 
@@ -283,12 +288,23 @@ class playerClass(entity):
         i.time_since_damaging_player = uptime
 
 class enemy(entity):
-  def __init__(self, radius, max_speed, position, max_health, health = 0, animation_json = False):
+  def __init__(self, radius, max_speed, position, max_health, health = 0, hurt_image = (None,None)):
+    #hurt_image is a tuple (source,destination) where both are file paths for an image to be saved or loaded
     self.time_since_damaging_player = 0
     self.max_health = max_health
+    self.last_damaged = 0
+    try:
+      if hurt_image[0] and hurt_image[1]:
+        self.hurt_image,_,_ = resize_image(hurt_image[0],hurt_image[1])
+      else:
+        self.hurt_image = None
+    except:
+      self.hurt_image = None
+
     if health == 0:
       self.health = max_health
-    super().__init__(radius, position, max_speed,(255,0,0),"Images/enemy.png","converted_enemy.png", animation_json=animation_json)
+    
+    super().__init__(radius, position, max_speed,(255,0,0),"Images\\Skull\\Normal.png","converted_enemy.png")
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
     player_pos = player.get_position()
@@ -329,8 +345,14 @@ class enemy(entity):
     pygame.sprite.Sprite.kill(self)
   def deal_damage(self, damage):
     self.health -= damage
+    self.last_damaged = uptime
     if self.health <= 0:
       self.on_death()
+  def draw(self):
+    if uptime-self.last_damaged <0.2 and self.hurt_image:
+      DISPLAYSURF.blit(self.hurt_image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
+    else:
+      DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
 
 class bullet(entity):
   def __init__(self, position, speed, damage, angle, pierce, image_location, image_destination):
@@ -376,7 +398,26 @@ class bullet(entity):
       if self.pierce < 0:
         self.remove_self()
 
-  
+class weapon():
+  fire_delay = 1 #Time between bullets
+  damage_mult = 1 #multiplier to base damage applied to bullets
+  def __init__():
+    pass
+  def find_angle_to_closest_enemy(self):
+    relative_vector = np.array((1,0))
+    enemy_pos = closest_enemy(player)
+    player_pos = player.get_position()
+    resultant_vector = enemy_pos-player_pos
+    dot_prod = relative_vector[0]*resultant_vector[0]+relative_vector[1]*resultant_vector[1]
+    positive_angle=np.arccos(np.sqrt(resultant_vector[0]**2+resultant_vector[1]**2))
+    if resultant_vector[1]<0:
+      angle = -positive_angle
+    else: 
+      angle = positive_angle
+    return angle
+
+
+
 
       
   
