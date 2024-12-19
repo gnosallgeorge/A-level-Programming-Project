@@ -8,7 +8,7 @@ import time
 import json
 
 pygame.init()
-scale = 480/1080
+scale = 720/1080
 DISPLAYSURF = pygame.display.set_mode((1920 * scale, 1080 * scale))
 player_screen_offset = np.array((1920,1080))/2
 pygame.display.set_caption('Hello World!')
@@ -22,7 +22,7 @@ num_enemies_spawned = 0
 total_experience = 0
 current_level = 0
 player_base_damage = 50
-pierce = 2
+base_pierce = 2
 
 #temp
 t_since_last = 0
@@ -139,7 +139,7 @@ background = backgroundClass()
 
 class entity(pygame.sprite.Sprite):
   # Entity class is used for players, enemies and projectiles and anything else that can collide with other entities or move around the screen
-  def __init__(self, radius, position, max_speed, colour,image_location,image_destination, animation_json = False):
+  def __init__(self, radius, position, max_speed, colour,image, animation_json = False):
     pygame.sprite.Sprite.__init__(self)
     self.position = np.array(position)
     self.radius = radius
@@ -148,7 +148,8 @@ class entity(pygame.sprite.Sprite):
     self.max_speed = max_speed
     self.colour = colour
     self.time_since_update = uptime
-    self.image,_,_ = resize_image(image_location,image_destination)
+    #self.image,_,_ = resize_image(image_location,image_destination)
+    self.image = image
     self.rect = pygame.Rect(self.position,(radius*2,radius*2))
 
     """if animation_json != False:
@@ -251,7 +252,8 @@ class playerClass(entity):
   max_health = 10
   health = max_health
   def __init__(self, radius, position):
-    super().__init__(radius, position, 500, (0,0,255),"Images/player.png","converted_player.png")
+    image,_,_ = resize_image("Images/player.png","converted_player.png")
+    super().__init__(radius, position, 500, (0,0,255),image)
   def move(self):
     #moves based on velocity, saves the result to self.rect
     global player_screen_offset 
@@ -293,6 +295,7 @@ class enemy(entity):
     self.time_since_damaging_player = 0
     self.max_health = max_health
     self.last_damaged = 0
+    image,_,_ = resize_image("Images\\Skull\\Normal.png","converted_enemy.png")
     try:
       if hurt_image[0] and hurt_image[1]:
         self.hurt_image,_,_ = resize_image(hurt_image[0],hurt_image[1])
@@ -304,7 +307,7 @@ class enemy(entity):
     if health == 0:
       self.health = max_health
     
-    super().__init__(radius, position, max_speed,(255,0,0),"Images\\Skull\\Normal.png","converted_enemy.png")
+    super().__init__(radius, position, max_speed,(255,0,0),image)
   def point_towards_player(self):
     #vect diff calculated using vct(AB) = vct(OB) - vct(OA)
     player_pos = player.get_position()
@@ -355,11 +358,9 @@ class enemy(entity):
       DISPLAYSURF.blit(self.image,(self.position-player_screen_offset-np.array((self.radius,self.radius)))*scale)
 
 class bullet(entity):
-  def __init__(self, position, speed, damage, angle, pierce, image_location, image_destination):
-    image = Image.open(image_location)
-    radius = image.width/2
-    super().__init__(radius,position,speed,(0,0,0),image_location,image_destination)
-    self.damage_multiplier = damage
+  def __init__(self, position, speed, damage, angle, pierce, radius, image):
+    super().__init__(radius,position,speed,(0,0,0),image)
+    self.damage = damage
     self.pierce = pierce
     self.set_direction(np.array((np.cos(angle),np.sin(angle))))
     self.last_entity_touched = False
@@ -394,27 +395,52 @@ class bullet(entity):
       self.last_entity_touched = collided_entity
       self.pierce -= 1
       # damage enemy here
-      collided_entity.deal_damage(player_base_damage*self.damage_multiplier)
+      collided_entity.deal_damage(self.damage)
       if self.pierce < 0:
         self.remove_self()
 
 class weapon():
   fire_delay = 1 #Time between bullets
   damage_mult = 1 #multiplier to base damage applied to bullets
-  def __init__():
-    pass
+  speed = 700 #in pixels per second
+  image_location = "Images/musket_bullet.png"
+  image_destination = "converted_musket_bullet.png"
+  time_since_fire = 0
+  def __init__(self):
+    image = Image.open(self.image_location)
+    self.radius = image.width/2
+    self.image,_,_ = resize_image(self.image_location,self.image_destination)
   def find_angle_to_closest_enemy(self):
     relative_vector = np.array((1,0))
-    enemy_pos = closest_enemy(player)
-    player_pos = player.get_position()
-    resultant_vector = enemy_pos-player_pos
-    dot_prod = relative_vector[0]*resultant_vector[0]+relative_vector[1]*resultant_vector[1]
-    positive_angle=np.arccos(np.sqrt(resultant_vector[0]**2+resultant_vector[1]**2))
-    if resultant_vector[1]<0:
-      angle = -positive_angle
-    else: 
-      angle = positive_angle
-    return angle
+    target = closest_enemy(player)
+    print(type(target))
+    if type(target) == enemy:
+      enemy_pos = target.get_position()
+      player_pos = player.get_position()
+      resultant_vector = enemy_pos-player_pos
+      dot_prod = relative_vector[0]*resultant_vector[0]+relative_vector[1]*resultant_vector[1]
+      positive_angle=np.arccos(dot_prod/np.sqrt(resultant_vector[0]**2+resultant_vector[1]**2))
+      if resultant_vector[1]<0:
+        angle = -positive_angle
+      else: 
+        angle = positive_angle
+      return angle
+    else:
+      return 0
+  def fire_bullet(self):
+    angle = self.find_angle_to_closest_enemy()
+    position = player.get_position()
+    damage = player_base_damage*self.damage_mult
+    pierce = base_pierce
+    self.time_since_fire = uptime
+    new_bullet = bullet(position, self.speed, damage, angle, pierce, self.radius, self.image)
+  def update(self):
+    if uptime-self.time_since_fire>self.fire_delay:
+      self.fire_bullet()
+
+
+
+
 
 
 
@@ -465,7 +491,7 @@ class experience():
     pygame.draw.rect(DISPLAYSURF, self.colour,pygame.Rect(exp_bar_size*scale)) #Display progress bar
 
 total = 0
-
+gun = weapon()
 player = playerClass(100, [0,0])
 all_sprites.add(player)
 experience = experience()
@@ -501,7 +527,8 @@ while True:
     t_since_last = uptime
     print(1/frame_time)
     print(len(enemies))
-    bullet(player.position,700,1,np.pi,1,"Images/musket_bullet.png","converted_musket_bullet.png")
+    gun.update()
+    #bullet(player.position,700,1,np.pi,1,"Images/musket_bullet.png","converted_musket_bullet.png")
   experience.draw()
 
   frame_time = clock.tick(framerate)/1000
