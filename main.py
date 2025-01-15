@@ -330,12 +330,13 @@ class enemy(entity):
       collision_check.remove(self)
       collision_check.add(player)
       for i in collision_check:
-        if pygame.sprite.collide_circle(self,i):
-          displacement_vect = self.position - i.position
-          combined_radius = self.radius + i.radius
-          scale = (combined_radius/vector_magnitude(displacement_vect))-1
-          movement = displacement_vect*scale
-          self.position = self.position + movement
+        if isinstance(i,entity):
+          if pygame.sprite.collide_circle(self,i):
+            displacement_vect = self.position - i.position
+            combined_radius = self.radius + i.radius
+            scale = (combined_radius/vector_magnitude(displacement_vect))-1
+            movement = displacement_vect*scale
+            self.position = self.position + movement
       collision_check.empty()
     self.rect[0:2] = self.position-np.array((self.radius,self.radius))
     # Delete enemies if they are too far from the player
@@ -391,10 +392,10 @@ class bullet(entity):
     collided_entity = self.collides_with_entity()
     if self.is_touching_wall():
       self.remove_self()
-    elif collided_entity != self.last_entity_touched and collided_entity != False:
+    #validates that the entity is an enemy and it has not already damaged the enemy
+    elif collided_entity != self.last_entity_touched and collided_entity != False and type(collided_entity) == enemy:
       self.last_entity_touched = collided_entity
       self.pierce -= 1
-      # damage enemy here
       collided_entity.deal_damage(self.damage)
       if self.pierce < 0:
         self.remove_self()
@@ -410,16 +411,21 @@ class weapon():
     image = Image.open(self.image_location)
     self.radius = image.width/2
     self.image,_,_ = resize_image(self.image_location,self.image_destination)
+
   def find_angle_to_closest_enemy(self):
-    relative_vector = np.array((1,0))
+    relative_vector = np.array((1,0)) #a unit vector that is defined as an angle of 0
     target = closest_enemy(player)
-    print(type(target))
-    if type(target) == enemy:
+    #if type(target) == enemy: #validates that an enemy has been found, otherwise returns 0
+    if isinstance(target,enemy):
       enemy_pos = target.get_position()
       player_pos = player.get_position()
       resultant_vector = enemy_pos-player_pos
-      dot_prod = relative_vector[0]*resultant_vector[0]+relative_vector[1]*resultant_vector[1]
+      #dot product of 2 vectors is x1*x2+y1*y2
+      dot_prod = relative_vector[0]*resultant_vector[0]+relative_vector[1]*resultant_vector[1] 
+      #angle between 2 vectors is a.b/(|a|*|b|)
+      #however |relative_vector| always = 1 :. it is not included
       positive_angle=np.arccos(dot_prod/np.sqrt(resultant_vector[0]**2+resultant_vector[1]**2))
+      #determines whether the resultant vector goes up or down 
       if resultant_vector[1]<0:
         angle = -positive_angle
       else: 
@@ -428,6 +434,7 @@ class weapon():
     else:
       return 0
   def fire_bullet(self):
+    #creates a new projectile and sets time_since_fired to the current uptime
     angle = self.find_angle_to_closest_enemy()
     position = player.get_position()
     damage = player_base_damage*self.damage_mult
@@ -435,8 +442,33 @@ class weapon():
     self.time_since_fire = uptime
     new_bullet = bullet(position, self.speed, damage, angle, pierce, self.radius, self.image)
   def update(self):
-    if uptime-self.time_since_fire>self.fire_delay:
+    if uptime-self.time_since_fire>self.fire_delay: #checks whether a bullet needs to be fired
       self.fire_bullet()
+  
+  class get_upgrade:
+    upgrade_categories = ["common","uncommon","rare","legendary","weapon"]
+    category_weights = [30,30,20,10,10]
+    upgrade_types = {"common":["damage","fire_rate"],"uncommon":["damage","fire_rate"],
+                    "rare":["damage","fire_rate","health"],"legendary":["damage","fire_rate","health"],"weapon":["weapon"]}
+    upgrade_stats = {"damage":[10,15,20,40,0],"fire_rate":[10,15,20,40,0],"health":[0,0,1,2,0]}
+    def new_upgrade(self):
+
+      rarities = random.choices(self.upgrade_categories,weights=self.category_weights,k=3)
+      selected_types= []
+      for i in rarities:
+        type = random.choice(self.upgrade_types[i])
+        selected_types.append[type]
+      
+    def draw():
+      pass
+      
+
+
+
+
+
+
+
 
 
 
