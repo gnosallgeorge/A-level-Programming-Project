@@ -445,41 +445,43 @@ class weapon():
     if uptime-self.time_since_fire>self.fire_delay: #checks whether a bullet needs to be fired
       self.fire_bullet()
   
-  class get_upgrade:
-    upgrade_categories = ["common","uncommon","rare","legendary","weapon"]
-    category_weights = [30,30,20,10,10]
-    upgrade_types = {"common":["damage","fire_rate"],"uncommon":["damage","fire_rate"],
-                    "rare":["damage","fire_rate","health"],"legendary":["damage","fire_rate","health"],"weapon":["weapon"]}
-    upgrade_stats = {"damage":[10,15,20,40,0],"fire_rate":[10,15,20,40,0],"health":[0,0,1,2,0]}
-    def new_upgrade(self):
+class get_upgrade:
+  upgrade_categories = ["common","uncommon","rare","legendary","weapon"]
+  category_weights = [35,35,20,5,5]
+  upgrade_types = {"common":["damage","fire_rate"],"uncommon":["damage","fire_rate"],
+                  "rare":["damage","fire_rate","health"],"legendary":["damage","fire_rate","health"],"weapon":["weapon"]}
+  upgrade_stats = {"damage":[10,15,20,40,0],"fire_rate":[10,15,20,40,0],"health":[0,0,1,2,0]}
+  def new_upgrade(self):
 
-      rarities = random.choices(self.upgrade_categories,weights=self.category_weights,k=3)
-      selected_types= []
-      for i in rarities:
-        type = random.choice(self.upgrade_types[i])
-        selected_types.append[type]
-      
-    def draw():
-      pass
-      
+    self.rarities = random.choices(self.upgrade_categories,weights=self.category_weights,k=3)
+    self.selected_types= []
+    self.icons = []
+    for i in self.rarities:
+      type = random.choice(self.upgrade_types[i])
+      self.selected_types.append(type)
+      icon,_,_ = resize_image("Images\\Upgrade_icons\\"+type+"\\"+i+".png", "Converted\\"+type+"_"+i+".png")
+      self.icons.append(icon)
+    
+  def draw(self):
 
+    #todo
+    #draw background rectangle
+    #draw icons
+    #display rarity: grey, blue, purple, gold
+    #box around selected upgrade
+    box_width = 700
+    box_height = 300
+    icon_size = 100
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
+    pygame.draw.rect(DISPLAYSURF, (200,160,100),
+                     pygame.Rect(np.array(((1920-box_width)/2,(1080-box_height)/2,700,300))*scale))
+    
+    DISPLAYSURF.blit(self.icons[0],(np.array((1920/2,(1080-box_height)/2)) + np.array((-icon_size*2,150)))*scale)
+    DISPLAYSURF.blit(self.icons[1],(np.array((1920/2,(1080-box_height)/2)) + np.array((-icon_size/2,150)))*scale)
+    DISPLAYSURF.blit(self.icons[2],(np.array((1920/2,(1080-box_height)/2)) + np.array((icon_size,150)))*scale)
+    
   
-
+    pass
 
 class experience():
   def __init__(self):
@@ -521,7 +523,8 @@ class experience():
     DISPLAYSURF.blit(text_surface,
                      (np.array((level_box_width,level_box_width))/2-text_centre_pos)*scale) #Display level
     pygame.draw.rect(DISPLAYSURF, self.colour,pygame.Rect(exp_bar_size*scale)) #Display progress bar
-
+upgrade = get_upgrade()
+upgrade.new_upgrade()
 total = 0
 gun = weapon()
 player = playerClass(100, [0,0])
@@ -553,6 +556,7 @@ while True:
   player.draw()
   closest_enemy(player)
   bullets.update()
+  
   # print(player.health)
   
   if uptime-t_since_last>1:
@@ -562,6 +566,7 @@ while True:
     gun.update()
     #bullet(player.position,700,1,np.pi,1,"Images/musket_bullet.png","converted_musket_bullet.png")
   experience.draw()
+  upgrade.draw()
 
   frame_time = clock.tick(framerate)/1000
   uptime += frame_time
