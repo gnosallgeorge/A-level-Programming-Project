@@ -411,12 +411,10 @@ class weapon():
     image = Image.open(self.image_location)
     self.radius = image.width/2
     self.image,_,_ = resize_image(self.image_location,self.image_destination)
-
   def find_angle_to_closest_enemy(self):
     relative_vector = np.array((1,0)) #a unit vector that is defined as an angle of 0
     target = closest_enemy(player)
-    #if type(target) == enemy: #validates that an enemy has been found, otherwise returns 0
-    if isinstance(target,enemy):
+    if isinstance(target,enemy): #validates that an enemy has been found, otherwise returns 0
       enemy_pos = target.get_position()
       player_pos = player.get_position()
       resultant_vector = enemy_pos-player_pos
@@ -446,14 +444,14 @@ class weapon():
       self.fire_bullet()
   
 class get_upgrade:
-  upgrade_categories = ["common","uncommon","rare","legendary","weapon"]
-  category_weights = [35,35,20,5,5]
+  rarity_categories = ("common","uncommon","rare","legendary","weapon")
+  category_weights = (35,35,20,5,5)
   upgrade_types = {"common":["damage","fire_rate"],"uncommon":["damage","fire_rate"],
                   "rare":["damage","fire_rate","health"],"legendary":["damage","fire_rate","health"],"weapon":["weapon"]}
   upgrade_stats = {"damage":[10,15,20,40,0],"fire_rate":[10,15,20,40,0],"health":[0,0,1,2,0]}
-  def new_upgrade(self):
 
-    self.rarities = random.choices(self.upgrade_categories,weights=self.category_weights,k=3)
+  def new_upgrade(self):
+    self.rarities = random.choices(self.rarity_categories,weights=self.category_weights,k=3)
     self.selected_types= []
     self.icons = []
     for i in self.rarities:
@@ -463,11 +461,7 @@ class get_upgrade:
       self.icons.append(icon)
     
   def draw(self):
-
     #todo
-    #draw background rectangle
-    #draw icons
-    #display rarity: grey, blue, purple, gold
     #box around selected upgrade
     box_width = 700
     box_height = 300
